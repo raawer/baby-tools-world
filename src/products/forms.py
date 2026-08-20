@@ -1,9 +1,13 @@
+from typing import Any
+
 from django import forms
 
 from .models import Comment
 
 
 class CommentForm(forms.ModelForm):
+    """Form for submitting a product rating, usable by users and guests."""
+
     class Meta:
         model = Comment
         fields = ["rating", "text", "guest_name", "guest_email"]
@@ -12,7 +16,15 @@ class CommentForm(forms.ModelForm):
             "text": forms.Textarea(attrs={"rows": 3}),
         }
 
-    def clean(self):
+    def clean(self) -> dict[str, Any]:
+        """Require name and email if the form was not bound to a user.
+
+        The user is read from ``self.initial["user"]``, which the view sets
+        for authenticated requests.
+
+        Returns:
+            The cleaned form data.
+        """
         data = super().clean()
         user = self.initial.get("user")
         if not user and not data.get("guest_name"):
