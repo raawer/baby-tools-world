@@ -87,6 +87,9 @@ To run code-quality checks that check the code-style and formatting you can run 
 black .
 # to apply correct sorting for imports
 isort .
+# Lint the codebase — run from the repo root, since flake8 reads its
+# config from pyproject.toml there (run this last, after formatting/sorting)
+flake8 .
 ```
 
 #### When to run this
