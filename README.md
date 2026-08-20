@@ -63,7 +63,14 @@ To configure the project, follow these steps:
     - the file needs to be stored next to the manage.py file in order to function properly.
     Other locations might also work but there is no guarantuee, and in last consequence you will need to update to project correspondingly.
 2. Open your `src/.env` and set the required environment variables:
-    - `ALLOWED_HOSTS`: provide a list of comma-separated values for the allowed host configuration => Defaults to `'localhost, 127.0.0.1, 0.0.0.0'`
+    - `DJANGO_SUPERUSER_USERNAME`: Sets the superuser's username
+    - `DJANGO_SUPERUSER_EMAIL`: Sets the superuser's email address
+    - `DJANGO_SUPERUSER_PASSWORD`: Sets the superuser's password
+
+    > [!NOTE] 
+    > These three variables are only used by `entrypoint.sh` to automatically create a superuser when the Docker container starts. They have no effect when running `python manage.py runserver` locally — in that case, create a superuser manually with `python manage.py createsuperuser`.
+    
+    - `ALLOWED_HOSTS`: Provide a list of comma-separated values for the allowed host configuration => Defaults to `'localhost, 127.0.0.1, 0.0.0.0'`
     - `DEBUG`: Set to `True` for development or `False` for production. Defaults to `True`
 
 ### Running the linting tools
