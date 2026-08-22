@@ -1,12 +1,22 @@
 from django.contrib import messages
 from django.db.models import Avg, Count
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from .forms import CommentForm
 from .models import Category, Comment, Product
 
 
-def product_list(request, category_slug=None):
+def product_list(request: HttpRequest, category_slug: str | None = None) -> HttpResponse:
+    """Render the product list, optionally filtered by category.
+
+    Args:
+        request: The incoming HTTP request.
+        category_slug: Slug of the category to filter by, if any.
+
+    Returns:
+        The rendered products page.
+    """
     categories = Category.objects.all()
     products = Product.objects.select_related("category").annotate(
         avg_rating=Avg("comments__rating"), total_ratings=Count("comments")
@@ -16,7 +26,17 @@ def product_list(request, category_slug=None):
     return render(request, "products.html", {"categories": categories, "products": products})
 
 
-def product_detail(request, category_slug, pk):
+def product_detail(request: HttpRequest, category_slug: str, pk: int) -> HttpResponse:
+    """Show a product with comments and related products, and handle rating submissions.
+
+    Args:
+        request: The incoming HTTP request.
+        category_slug: Slug of the category the product belongs to.
+        pk: Primary key of the product.
+
+    Returns:
+        The rendered product page, or a redirect after a saved rating.
+    """
     product = get_object_or_404(
         Product.objects.select_related("category").annotate(
             avg_rating=Avg("comments__rating"), total_ratings=Count("comments")
@@ -59,13 +79,7 @@ def product_detail(request, category_slug, pk):
 
             return redirect("product_detail", category_slug=category_slug, pk=product.pk)
     else:
-        # Pre-fill form for authenticated user with existing comment (if any)
-        initial = {}
-        if request.user.is_authenticated:
-            existing = product.comments.filter(user=request.user).first()
-            if existing:
-                initial = {"rating": existing.rating, "text": existing.text}
-        form = CommentForm(initial=initial)
+        form = CommentForm()
 
     return render(
         request,

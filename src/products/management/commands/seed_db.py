@@ -1,3 +1,7 @@
+import shutil
+from pathlib import Path
+
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from products.models import Category, Product
@@ -115,8 +119,9 @@ products = [
 class Command(BaseCommand):
     help = "Seeds the database with initial category and product data"
 
-    def handle(self, *args, **kwargs):
-        # TODO: create and add categories and product data
+    def handle(self, *args, **kwargs) -> None:
+        """Copy images to media folder and seeds the database with initial category and product data"""
+        self._copy_seed_images()
         self.stdout.write(self.style.SUCCESS("Beginning to seed the database..."))
 
         created_categories = 0
@@ -174,3 +179,28 @@ class Command(BaseCommand):
 
         except Exception as err:
             self.stdout.write(self.style.ERROR(f"Error creating products: {err}"))
+
+    def _copy_seed_images(self) -> None:
+        """Copy the bundled catalog images from static/ into MEDIA_ROOT.
+
+        Product.image is an ImageField, so URLs resolve against MEDIA_ROOT.
+        The source images live under static/ (versioned in git); this makes
+        sure they also exist where Django actually looks for them.
+        """
+        source = Path(settings.BASE_DIR) / "static" / "imgs" / "products"
+        destination = Path(settings.MEDIA_ROOT) / "imgs" / "products"
+
+        if not source.is_dir():
+            self.stdout.write(self.style.WARNING(f"No seed images found at {source}, skipping."))
+            return
+
+        destination.mkdir(parents=True, exist_ok=True)
+
+        copied = 0
+        for entry in sorted(source.iterdir()):
+            if not entry.is_file():
+                continue
+            shutil.copy2(entry, destination / entry.name)
+            copied += 1
+
+        self.stdout.write(self.style.SUCCESS(f"Copied {copied} image(s) to {destination}."))
